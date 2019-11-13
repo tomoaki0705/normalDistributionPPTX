@@ -11,6 +11,13 @@ const double cMaxRange = 3.0;
 const int cCanvasWidth = (int)(cMaxRange - cMinRange) * cm2pptx;
 const double cVerticalScale = 8.;
 
+double function(double x)
+{
+    // normal distribution
+    const double scale = 1. / sqrt(2 * M_PI);
+    return exp(-(x * x / 2.)) * scale;
+}
+
 struct _point
 {
     double x;
@@ -23,22 +30,21 @@ struct bezierPoint
     point pt[3];
 };
 
+double convertToCanvasY(double y, double maxRangeY, double minRangeY, double canvasHeight)
+{
+    double ratioY = canvasHeight / (maxRangeY - minRangeY);
+    double result = (y - minRangeY) * ratioY;
+    result = canvasHeight - result;
+    return result;
+}
+
 point convertToCanvas(const point& figurePoint, const double minRangeX, const double maxRangeX, const double minRangeY, const double maxRangeY, const int canvasWidth, const int canvasHeight)
 {
     point result;
     double ratioX = canvasWidth / (maxRangeX - minRangeX);
-    double ratioY = canvasHeight / (maxRangeY - minRangeY);
     result.x = (figurePoint.x - minRangeX) * ratioX;
-    result.y = (figurePoint.y - minRangeY) * ratioY;
-    result.y = canvasHeight - result.y;
+    result.y = convertToCanvasY(figurePoint.y, maxRangeY, minRangeY, canvasHeight);
     return result;
-}
-
-double function(double x)
-{
-    // normal distribution
-    const double scale = 1. / sqrt(2 * M_PI);
-    return exp(-(x * x / 2.)) * scale;
 }
 
 int main(int argc, char**argv)
@@ -118,9 +124,12 @@ int main(int argc, char**argv)
     }
     ofs << "</a:path>" << std::endl << "</a:pathLst>" << std::endl << "</a:custGeom><a:noFill/></p:spPr>" << std::endl;
     ofs << "<p:style><a:lnRef idx=\"2\"><a:schemeClr val=\"accent1\"><a:shade val=\"50000\"/></a:schemeClr></a:lnRef><a:fillRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"lt1\"/></a:fontRef></p:style><p:txBody><a:bodyPr rtlCol=\"0\" anchor=\"ctr\"/><a:lstStyle/><a:p><a:pPr algn=\"ctr\"/><a:endParaRPr kumimoji=\"1\" lang=\"ja-JP\" altLang=\"en-US\"/></a:p></p:txBody></p:sp>";
-    // start showing arrow line
+    // start showing vertical arrow line
     ofs << "<p:cxnSp><p:nvCxnSpPr><p:cNvPr id=\"4\" name=\"LineArrow3\"><a:extLst><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{B606E735-2B9E-47D5-A972-698E782DD359}\"/></a:ext></a:extLst></p:cNvPr><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr>";
     ofs << "<p:spPr><a:xfrm flipV=\"1\"><a:off x=\"" << offsetX + (cCanvasWidth / 2) << "\" y=\"" << (int)(offsetY - 0.1 * canvasHeight) << "\"/><a:ext cx=\"0\" cy=\"" << (int)(canvasHeight * 1.2) << "\"/></a:xfrm><a:prstGeom prst=\"straightConnector1\"><a:avLst/></a:prstGeom><a:ln><a:tailEnd type=\"triangle\"/></a:ln></p:spPr><p:style><a:lnRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:lnRef><a:fillRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></a:fontRef></p:style></p:cxnSp>";
+    // start showing horizontal arrow line
+    ofs << "<p:cxnSp><p:nvCxnSpPr><p:cNvPr id=\"5\" name=\"LineArrow4\"><a:extLst><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{B606E735-2B9E-47D5-A972-698E782DD359}\"/></a:ext></a:extLst></p:cNvPr><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr>";
+    ofs << "<p:spPr><a:xfrm flipV=\"1\"><a:off x=\"" << (int)(offsetX - (cCanvasWidth * 0.1)) << "\" y=\"" << (int)(offsetY + convertToCanvasY(0., maxY, minY, canvasHeight)) << "\"/><a:ext cx=\"" << (int)(cCanvasWidth * 1.2) << "\" cy=\"0\"/></a:xfrm><a:prstGeom prst=\"straightConnector1\"><a:avLst/></a:prstGeom><a:ln><a:tailEnd type=\"triangle\"/></a:ln></p:spPr><p:style><a:lnRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:lnRef><a:fillRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></a:fontRef></p:style></p:cxnSp>";
     ofs << "</p:spTree><p:extLst><p:ext uri=\"{BB962C8B-B14F-4D97-AF65-F5344CB8AC3E}\"><p14:creationId xmlns:p14=\"http://schemas.microsoft.com/office/powerpoint/2010/main\" val=\"2550586031\"/></p:ext></p:extLst></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>";
 
     return 0;
