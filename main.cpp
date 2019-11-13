@@ -9,7 +9,7 @@ const int offsetY = 5 * cm2pptx;
 const double cMinRange = -3.0;
 const double cMaxRange = 3.0;
 const int cCanvasWidth = (int)(cMaxRange - cMinRange) * cm2pptx;
-const double cVerticalScale = 10.;
+const double cVerticalScale = 8.;
 
 struct _point
 {
@@ -34,11 +34,17 @@ point convertToCanvas(const point& figurePoint, const double minRangeX, const do
     return result;
 }
 
+double function(double x)
+{
+    // normal distribution
+    const double scale = 1. / sqrt(2 * M_PI);
+    return exp(-(x * x / 2.)) * scale;
+}
+
 int main(int argc, char**argv)
 {
     const double cStep = 0.1;
     const int cIteration = (int)((cMaxRange - cMinRange + DBL_EPSILON) / cStep);
-    const double scale = 1. / sqrt(2 * M_PI);
 
     bezierPoint dPoint;
     std::vector<point> points;
@@ -49,9 +55,9 @@ int main(int argc, char**argv)
     {
         point pt;
         pt.x = cMinRange + i * cStep;
-        pt.y = exp(-(pt.x * pt.x / 2.)) * scale;
-        double slope = -pt.x * pt.y;
+        pt.y = function(pt.x);
         double dStep = cStep / 3.;
+        double slope = (function(pt.x + dStep) - function(pt.x - dStep)) / (dStep * 2);
         double dx = pt.x + dStep;
         points.push_back(pt);
         dPoint.pt[1].x = pt.x - dStep;
