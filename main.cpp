@@ -27,9 +27,55 @@ struct _point
 };
 typedef _point point;
 
+struct _size
+{
+    double width;
+    double height;
+};
+typedef _size size;
+
 struct bezierPoint
 {
     point pt[3];
+};
+
+enum objectType
+{
+    OBJECT_CURVES,
+    OBJECT_STRAIGHTLINE
+};
+
+class baseObject
+{
+public:
+    baseObject(enum objectType _type, const size& _canvasSize, const size& _offset)
+        : type(_type)
+        , canvasSize(_canvasSize)
+        , canvasOffset(_offset)
+    {};
+    ~baseObject();
+
+private:
+    size canvasSize;
+    size canvasOffset;
+    enum objectType type;
+};
+
+baseObject::~baseObject()
+{
+}
+
+class drawPPTX
+{
+public:
+    drawPPTX()
+        : objectIdCounter(2)
+    {}
+    ~drawPPTX() {} ;
+
+private:
+    std::vector<baseObject> objects;
+    unsigned int objectIdCounter;
 };
 
 double convertToCanvasY(double y, double maxRangeY, double minRangeY, double canvasHeight)
@@ -47,6 +93,16 @@ point convertToCanvas(const point& figurePoint, const double minRangeX, const do
     result.x = (figurePoint.x - minRangeX) * ratioX;
     result.y = convertToCanvasY(figurePoint.y, maxRangeY, minRangeY, canvasHeight);
     return result;
+}
+
+std::ostream& operator << (std::ostream& os, const drawPPTX& a)
+{
+    // output header
+    os << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" << std::endl;
+    os << "<p:sld xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\"><p:cSld><p:spTree>";
+    os << "<p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"0\" cy=\"0\"/><a:chOff x=\"0\" y=\"0\"/><a:chExt cx=\"0\" cy=\"0\"/></a:xfrm></p:grpSpPr>" << std::endl;
+    os << "<p:sp><p:nvSpPr><p:cNvPr id=\"2\" name=\"qqqqqqqqq\"><a:extLst><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{29FFCF3D-8F32-482F-B193-ACC1CF50B0FA}\"/></a:ext></a:extLst></p:cNvPr><p:cNvSpPr/><p:nvPr/></p:nvSpPr>";
+    return os;
 }
 
 int main(int argc, char**argv)
@@ -84,8 +140,10 @@ int main(int argc, char**argv)
     int canvasHeight = (int)((maxY - minY) * cVerticalScale) * cm2pptx;
 
     std::ofstream ofs("slide1.xml");
+#if 1
     ofs << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" << std::endl;
-    ofs << "<p:sld xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id=\"2\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"0\" cy=\"0\"/><a:chOff x=\"0\" y=\"0\"/><a:chExt cx=\"0\" cy=\"0\"/></a:xfrm></p:grpSpPr><p:sp><p:nvSpPr><p:cNvPr id=\"1\" name=\"qqqqqqqqq\"><a:extLst><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{29FFCF3D-8F32-482F-B193-ACC1CF50B0FA}\"/></a:ext></a:extLst></p:cNvPr><p:cNvSpPr/><p:nvPr/></p:nvSpPr>";
+    ofs << "<p:sld xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"0\" cy=\"0\"/><a:chOff x=\"0\" y=\"0\"/><a:chExt cx=\"0\" cy=\"0\"/></a:xfrm></p:grpSpPr>";
+    ofs << "<p:sp><p:nvSpPr><p:cNvPr id=\"2\" name=\"qqqqqqqqq\"><a:extLst><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{29FFCF3D-8F32-482F-B193-ACC1CF50B0FA}\"/></a:ext></a:extLst></p:cNvPr><p:cNvSpPr/><p:nvPr/></p:nvSpPr>";
     ofs << "<p:spPr><a:xfrm><a:off x=\"" << offsetX << "\" y=\"" << offsetY << "\"/>" << std::endl;
     ofs << "<a:ext cx=\"" << cCanvasWidth << "\" cy=\"" << canvasHeight << "\"/>" << std::endl << "</a:xfrm><a:custGeom><a:avLst/><a:gdLst>" << std::endl;
     int index = 0;
@@ -133,6 +191,7 @@ int main(int argc, char**argv)
     ofs << "<p:cxnSp><p:nvCxnSpPr><p:cNvPr id=\"5\" name=\"LineArrow4\"><a:extLst><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{B606E735-2B9E-47D5-A972-698E782DD359}\"/></a:ext></a:extLst></p:cNvPr><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr>";
     ofs << "<p:spPr><a:xfrm flipV=\"1\"><a:off x=\"" << (int)(offsetX - (cCanvasWidth * 0.1)) << "\" y=\"" << (int)(offsetY + convertToCanvasY(0., maxY, minY, canvasHeight)) << "\"/><a:ext cx=\"" << (int)(cCanvasWidth * 1.2) << "\" cy=\"0\"/></a:xfrm><a:prstGeom prst=\"straightConnector1\"><a:avLst/></a:prstGeom><a:ln><a:tailEnd type=\"triangle\"/></a:ln></p:spPr><p:style><a:lnRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:lnRef><a:fillRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></a:fontRef></p:style></p:cxnSp>";
     ofs << "</p:spTree><p:extLst><p:ext uri=\"{BB962C8B-B14F-4D97-AF65-F5344CB8AC3E}\"><p14:creationId xmlns:p14=\"http://schemas.microsoft.com/office/powerpoint/2010/main\" val=\"2550586031\"/></p:ext></p:extLst></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>";
+#endif
 
     return 0;
 }
