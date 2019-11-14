@@ -99,51 +99,82 @@ public:
             dPoint.pt[0] = point(pt.x + dStep, pt.y + slope);
         }
     }
+    void drawArrow(const point& head, const point& tail)
+    {
+        points.push_back(head);
+        points.push_back(tail);
+    }
     enum objectType getType() const { return type; }
     range getRangeX() const { return rangeX; }
     range getRangeY() const { return rangeY; }
+    void setRangeX(const range& _rangeX) { rangeX = _rangeX; }
+    void setRangeY(const range& _rangeY) { rangeY = _rangeY; }
     void drawObject(std::ostream& os, unsigned int counter, const size& _canvasOffset, const size& _canvasSize) const
     {
         int canvasOffsetPPTXWidth = (int)(_canvasOffset.width * cm2pptx);
         int canvasOffsetPPTXHeight = (int)(_canvasOffset.height * cm2pptx);
         int canvasSizePPTXWidth = (int)(_canvasSize.width * cm2pptx);
         int canvasSizePPTXHeight = (int)(_canvasSize.height * cm2pptx);
-        os << "<p:sp><p:nvSpPr><p:cNvPr id=\"" << counter << "\" name=\"qqqqqqqqq\"><a:extLst><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{29FFCF3D-8F32-482F-B193-ACC1CF50B0FA}\"/></a:ext></a:extLst></p:cNvPr><p:cNvSpPr/><p:nvPr/></p:nvSpPr>";
-        os << "<p:spPr><a:xfrm><a:off x=\"" << canvasOffsetPPTXWidth << "\" y=\"" << canvasOffsetPPTXHeight << "\"/>" << std::endl;
-        os << "<a:ext cx=\"" << canvasSizePPTXWidth << "\" cy=\"" << canvasSizePPTXHeight << "\"/>" << std::endl << "</a:xfrm><a:custGeom><a:avLst/><a:gdLst>" << std::endl;
-        for (size_t i = 0; i < points.size(); i++)
+        switch (type)
         {
-            point canvasPoint = convertToCanvas(points[i], size(canvasSizePPTXWidth, canvasSizePPTXHeight));
-            os << "<a:gd name=\"connsiteX" << i << "\"  fmla=\"*/ " << (int)(canvasPoint.x) << " w " << canvasSizePPTXWidth  << "\"/>" << std::endl;
-            os << "<a:gd name=\"connsiteY" << i << "\"  fmla=\"*/ " << (int)(canvasPoint.y) << " h " << canvasSizePPTXHeight << "\"/>" << std::endl;
-        }
-        os << "</a:gdLst><a:ahLst/><a:cxnLst>" << std::endl;
-        for (size_t i = 0; i < points.size(); i++)
+        case OBJECT_CURVES:
         {
-            os << "<a:cxn ang=\"0\">" << std::endl;
-            os << "<a:pos x=\"connsiteX" << i << "\" y=\"connsiteY" << i << "\"/>" << std::endl;
-            os << "</a:cxn>" << std::endl;
-        }
-        {
-            point canvasPointStart = convertToCanvas(points[0], size(canvasSizePPTXWidth, canvasSizePPTXHeight));
-            os << "</a:cxnLst><a:rect l=\"l\" t=\"t\" r=\"r\" b=\"b\"/><a:pathLst>" << std::endl;
-            os << "<a:path w=\"" << canvasSizePPTXWidth << "\" h=\"" << canvasSizePPTXHeight << "\">" << std::endl;
-            os << "<a:moveTo>" << std::endl;
-            os << "<a:pt x=\"" << (int)(canvasPointStart.x) << "\" y=\"" << (int)(canvasPointStart.y) << "\"/>" << std::endl;
-            os << "</a:moveTo>" << std::endl;
-        }
-        for (auto&& it : curves)
-        {
-            os << "<a:cubicBezTo>" << std::endl;
-            for (size_t i = 0; i < 3; i++)
+            os << "<p:sp><p:nvSpPr><p:cNvPr id=\"" << counter << "\" name=\"qqqqqqqqq\"><a:extLst><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{29FFCF3D-8F32-482F-B193-ACC1CF50B0FA}\"/></a:ext></a:extLst></p:cNvPr><p:cNvSpPr/><p:nvPr/></p:nvSpPr>";
+            os << "<p:spPr><a:xfrm><a:off x=\"" << canvasOffsetPPTXWidth << "\" y=\"" << canvasOffsetPPTXHeight << "\"/>" << std::endl;
+            os << "<a:ext cx=\"" << canvasSizePPTXWidth << "\" cy=\"" << canvasSizePPTXHeight << "\"/>" << std::endl << "</a:xfrm><a:custGeom><a:avLst/><a:gdLst>" << std::endl;
+            for (size_t i = 0; i < points.size(); i++)
             {
-                point canvasPoint = convertToCanvas(it.pt[i], size(canvasSizePPTXWidth, canvasSizePPTXHeight));
-                os << "<a:pt x=\"" << (int)(canvasPoint.x) << "\" y=\"" << (int)(canvasPoint.y) << "\"/>" << std::endl;
+                point canvasPoint = convertToCanvas(points[i], size(canvasSizePPTXWidth, canvasSizePPTXHeight));
+                os << "<a:gd name=\"connsiteX" << i << "\"  fmla=\"*/ " << (int)(canvasPoint.x) << " w " << canvasSizePPTXWidth << "\"/>" << std::endl;
+                os << "<a:gd name=\"connsiteY" << i << "\"  fmla=\"*/ " << (int)(canvasPoint.y) << " h " << canvasSizePPTXHeight << "\"/>" << std::endl;
             }
-            os << "</a:cubicBezTo>" << std::endl;
+            os << "</a:gdLst><a:ahLst/><a:cxnLst>" << std::endl;
+            for (size_t i = 0; i < points.size(); i++)
+            {
+                os << "<a:cxn ang=\"0\">" << std::endl;
+                os << "<a:pos x=\"connsiteX" << i << "\" y=\"connsiteY" << i << "\"/>" << std::endl;
+                os << "</a:cxn>" << std::endl;
+            }
+            {
+                point canvasPointStart = convertToCanvas(points[0], size(canvasSizePPTXWidth, canvasSizePPTXHeight));
+                os << "</a:cxnLst><a:rect l=\"l\" t=\"t\" r=\"r\" b=\"b\"/><a:pathLst>" << std::endl;
+                os << "<a:path w=\"" << canvasSizePPTXWidth << "\" h=\"" << canvasSizePPTXHeight << "\">" << std::endl;
+                os << "<a:moveTo>" << std::endl;
+                os << "<a:pt x=\"" << (int)(canvasPointStart.x) << "\" y=\"" << (int)(canvasPointStart.y) << "\"/>" << std::endl;
+                os << "</a:moveTo>" << std::endl;
+            }
+            for (auto&& it : curves)
+            {
+                os << "<a:cubicBezTo>" << std::endl;
+                for (size_t i = 0; i < 3; i++)
+                {
+                    point canvasPoint = convertToCanvas(it.pt[i], size(canvasSizePPTXWidth, canvasSizePPTXHeight));
+                    os << "<a:pt x=\"" << (int)(canvasPoint.x) << "\" y=\"" << (int)(canvasPoint.y) << "\"/>" << std::endl;
+                }
+                os << "</a:cubicBezTo>" << std::endl;
+            }
+            os << "</a:path>" << std::endl << "</a:pathLst>" << std::endl << "</a:custGeom><a:noFill/></p:spPr>" << std::endl;
+            os << "<p:style><a:lnRef idx=\"2\"><a:schemeClr val=\"accent1\"><a:shade val=\"50000\"/></a:schemeClr></a:lnRef><a:fillRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"lt1\"/></a:fontRef></p:style><p:txBody><a:bodyPr rtlCol=\"0\" anchor=\"ctr\"/><a:lstStyle/><a:p><a:pPr algn=\"ctr\"/><a:endParaRPr kumimoji=\"1\" lang=\"ja-JP\" altLang=\"en-US\"/></a:p></p:txBody></p:sp>";
         }
-        os << "</a:path>" << std::endl << "</a:pathLst>" << std::endl << "</a:custGeom><a:noFill/></p:spPr>" << std::endl;
-        os << "<p:style><a:lnRef idx=\"2\"><a:schemeClr val=\"accent1\"><a:shade val=\"50000\"/></a:schemeClr></a:lnRef><a:fillRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"lt1\"/></a:fontRef></p:style><p:txBody><a:bodyPr rtlCol=\"0\" anchor=\"ctr\"/><a:lstStyle/><a:p><a:pPr algn=\"ctr\"/><a:endParaRPr kumimoji=\"1\" lang=\"ja-JP\" altLang=\"en-US\"/></a:p></p:txBody></p:sp>";
+        break;
+        case OBJECT_STRAIGHTLINE:
+        {
+            double minX = points[0].x < points[1].x ? points[0].x : points[1].x;
+            double maxX = points[1].x < points[0].x ? points[0].x : points[1].x;
+            double minY = points[0].y < points[1].y ? points[0].y : points[1].y;
+            double maxY = points[1].y < points[0].y ? points[0].y : points[1].y;
+            int offsetX = (int)(canvasOffsetPPTXWidth + (minX / (rangeX.max - rangeX.min) + rangeX.min)* cm2pptx);
+            int offsetY = (int)(canvasOffsetPPTXHeight + ((rangeY.max - maxY) / (rangeY.max - rangeY.min))* cm2pptx);
+            int canvasWidth = (int)(((maxX - minX) / (rangeX.max - rangeX.min)) * cm2pptx);
+            int canvasHeight = (int)(((maxY - minY) / (rangeY.max - rangeY.min)) * cm2pptx);
+            // start showing vertical arrow line
+            os << "<p:cxnSp><p:nvCxnSpPr><p:cNvPr id=\"4\" name=\"LineArrow" << counter << "\"><a:extLst><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{B606E735-2B9E-47D5-A972-698E782DD359}\"/></a:ext></a:extLst></p:cNvPr><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr>";
+            os << "<p:spPr><a:xfrm flipV=\"1\"><a:off x=\"" << offsetX << "\" y=\"" << offsetY << "\"/><a:ext cx=\"" << canvasWidth << "\" cy=\"" << canvasHeight << "\"/></a:xfrm><a:prstGeom prst=\"straightConnector1\"><a:avLst/></a:prstGeom><a:ln><a:tailEnd type=\"triangle\"/></a:ln></p:spPr><p:style><a:lnRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:lnRef><a:fillRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></a:fontRef></p:style></p:cxnSp>";
+        }
+        break;
+        default:
+            break;
+        }
     }
 
 private:
@@ -195,15 +226,7 @@ public:
     {
         for (auto&& it : objects)
         {
-            switch (it.getType())
-            {
-            case OBJECT_CURVES:
-                it.drawObject(os, objectIdCounter, canvasOffset, canvasSize);
-                break;
-            case OBJECT_STRAIGHTLINE:
-            default:
-                break;
-            }
+            it.drawObject(os, objectIdCounter, canvasOffset, canvasSize);
         }
     }
     void push_back(const baseObject& obj)
@@ -213,6 +236,17 @@ public:
         {
             rangeX = obj.getRangeX();
             rangeY = obj.getRangeY();
+        }
+        else
+        {
+            for (auto&& it : objects)
+            {
+                if (it.getType() == OBJECT_CURVES)
+                {
+                    objects[objects.size() - 1].setRangeX(rangeX);
+                    objects[objects.size() - 1].setRangeY(rangeY);
+                }
+            }
         }
     }
 
@@ -239,8 +273,14 @@ int main(int argc, char**argv)
     range rangeX(cMinRange, cMaxRange);
     baseObject mainCurve(OBJECT_CURVES);
     mainCurve.drawCurves(function, rangeX, cStepCounts);
+    range rangeY = mainCurve.getRangeY();
+    baseObject verticalLine(OBJECT_STRAIGHTLINE), horizontalLine(OBJECT_STRAIGHTLINE);
+    verticalLine.drawArrow(point(rangeY.min, 0), point(rangeY.max, 0));
+    horizontalLine.drawArrow(point(cMinRange, 0), point(cMaxRange, 0));
 
     normalDistribution.push_back(mainCurve);
+    normalDistribution.push_back(verticalLine);
+    normalDistribution.push_back(horizontalLine);
 
     std::ofstream ofs("slide1.xml");
     ofs << normalDistribution;
