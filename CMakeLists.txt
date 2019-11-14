@@ -21,7 +21,7 @@ macro(ADD_POST_BUILD _TARGET _COMMAND)
 endmacro()
 
 add_custom_target(${generateTarget})
-
+add_dependencies(${generateTarget} ${TARGET_NAME})
 ADD_POST_BUILD(${generateTarget} ${TARGET_NAME})
 ADD_POST_BUILD(${generateTarget} ${CM} -E remove_directory ${EXTRACTED_TEMPLATE})
 ADD_POST_BUILD(${generateTarget} ${CM} -E make_directory ${EXTRACTED_TEMPLATE})
