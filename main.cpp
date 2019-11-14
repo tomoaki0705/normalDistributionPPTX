@@ -132,7 +132,7 @@ public:
         int canvasSizePPTXHeight = (int)(_canvasSize.height * cm2pptx);
         os << "<p:sp><p:nvSpPr><p:cNvPr id=\"" << counter << "\" name=\"qqqqqqqqq\"><a:extLst><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{29FFCF3D-8F32-482F-B193-ACC1CF50B0FA}\"/></a:ext></a:extLst></p:cNvPr><p:cNvSpPr/><p:nvPr/></p:nvSpPr>";
         os << "<p:spPr><a:xfrm><a:off x=\"" << canvasOffsetPPTXWidth << "\" y=\"" << canvasOffsetPPTXHeight << "\"/>" << std::endl;
-        os << "<a:ext cx=\"" << canvasOffsetPPTXWidth << "\" cy=\"" << canvasSizePPTXHeight << "\"/>" << std::endl << "</a:xfrm><a:custGeom><a:avLst/><a:gdLst>" << std::endl;
+        os << "<a:ext cx=\"" << canvasSizePPTXWidth << "\" cy=\"" << canvasSizePPTXHeight << "\"/>" << std::endl << "</a:xfrm><a:custGeom><a:avLst/><a:gdLst>" << std::endl;
         for (size_t i = 0; i < points.size(); i++)
         {
             point canvasPoint = convertToCanvas(points[i], rangeX, rangeY, size(canvasSizePPTXWidth, canvasSizePPTXHeight));
