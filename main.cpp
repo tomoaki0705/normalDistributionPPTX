@@ -18,8 +18,7 @@ double function(double x)
 {
     // normal distribution
     const double scale = 1. / sqrt(2 * M_PI);
- //   return exp(-(x * x / 2.)) * scale;
-    return cos(x) * 0.2 + sin(11.*x);
+    return exp(-(x * x / 2.)) * scale;
 }
 
 struct _point
