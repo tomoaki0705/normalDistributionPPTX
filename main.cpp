@@ -60,28 +60,6 @@ enum objectType
     OBJECT_STRAIGHTLINE
 };
 
-double convertToCanvasY(double y, double maxRangeY, double minRangeY, double canvasHeight)
-{
-    double ratioY = canvasHeight / (maxRangeY - minRangeY);
-    double result = (y - minRangeY) * ratioY;
-    result = canvasHeight - result;
-    return result;
-}
-
-point convertToCanvas(const point& figurePoint, const range& _rangeX, const range& _rangeY, const size& canvasSize)
-{
-    point result;
-    double ratioX = canvasSize.width / (_rangeX.max - _rangeX.min);
-    result.x = (figurePoint.x - _rangeX.min) * ratioX;
-    result.y = convertToCanvasY(figurePoint.y, _rangeY.max, _rangeY.min, canvasSize.height);
-    return result;
-}
-
-point convertToCanvas(const point& figurePoint, const double minRangeX, const double maxRangeX, const double minRangeY, const double maxRangeY, const int canvasWidth, const int canvasHeight)
-{
-    return convertToCanvas(figurePoint, range(minRangeX, maxRangeX), range(minRangeY, maxRangeY), size(canvasWidth, canvasHeight));
-}
-
 class baseObject
 {
 public:
@@ -135,7 +113,7 @@ public:
         os << "<a:ext cx=\"" << canvasSizePPTXWidth << "\" cy=\"" << canvasSizePPTXHeight << "\"/>" << std::endl << "</a:xfrm><a:custGeom><a:avLst/><a:gdLst>" << std::endl;
         for (size_t i = 0; i < points.size(); i++)
         {
-            point canvasPoint = convertToCanvas(points[i], rangeX, rangeY, size(canvasSizePPTXWidth, canvasSizePPTXHeight));
+            point canvasPoint = convertToCanvas(points[i], size(canvasSizePPTXWidth, canvasSizePPTXHeight));
             os << "<a:gd name=\"connsiteX" << i << "\"  fmla=\"*/ " << (int)(canvasPoint.x) << " w " << canvasSizePPTXWidth  << "\"/>" << std::endl;
             os << "<a:gd name=\"connsiteY" << i << "\"  fmla=\"*/ " << (int)(canvasPoint.y) << " h " << canvasSizePPTXHeight << "\"/>" << std::endl;
         }
@@ -147,7 +125,7 @@ public:
             os << "</a:cxn>" << std::endl;
         }
         {
-            point canvasPointStart = convertToCanvas(points[0], rangeX, rangeY, size(canvasSizePPTXWidth, canvasSizePPTXHeight));
+            point canvasPointStart = convertToCanvas(points[0], size(canvasSizePPTXWidth, canvasSizePPTXHeight));
             os << "</a:cxnLst><a:rect l=\"l\" t=\"t\" r=\"r\" b=\"b\"/><a:pathLst>" << std::endl;
             os << "<a:path w=\"" << canvasSizePPTXWidth << "\" h=\"" << canvasSizePPTXHeight << "\">" << std::endl;
             os << "<a:moveTo>" << std::endl;
@@ -159,7 +137,7 @@ public:
             os << "<a:cubicBezTo>" << std::endl;
             for (size_t i = 0; i < 3; i++)
             {
-                point canvasPoint = convertToCanvas(it.pt[i], rangeX, rangeY, size(canvasSizePPTXWidth, canvasSizePPTXHeight));
+                point canvasPoint = convertToCanvas(it.pt[i], size(canvasSizePPTXWidth, canvasSizePPTXHeight));
                 os << "<a:pt x=\"" << (int)(canvasPoint.x) << "\" y=\"" << (int)(canvasPoint.y) << "\"/>" << std::endl;
             }
             os << "</a:cubicBezTo>" << std::endl;
@@ -169,6 +147,18 @@ public:
     }
 
 private:
+    point convertToCanvas(const point& figurePoint, const size& canvasSize) const
+    {
+        point result;
+        double ratioX = canvasSize.width / (rangeX.max - rangeX.min);
+        double ratioY = canvasSize.height / (rangeY.max - rangeY.min);
+        result.x = (figurePoint.x - rangeX.min) * ratioX;
+        result.y = (figurePoint.y - rangeY.min) * ratioY;
+        result.y = canvasSize.height - result.y;
+        return result;
+    }
+
+
     range rangeX;
     range rangeY;
     enum objectType type;
