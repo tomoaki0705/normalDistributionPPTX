@@ -1,15 +1,16 @@
 # minimum requirement
-cmake_minimum_required(VERSION 3.6)
+cmake_minimum_required(VERSION 3.5)
 
 # solution
 project(normalDistribution)
 
-SET(TARGET_NAME drawPPTX)
-set(EXTRACTED_TEMPLATE        ${CMAKE_BINARY_DIR}/template)
-set(TEMPLATE_SOURCE           ${CMAKE_SOURCE_DIR}/templates/)
-set(OUTPUT_XML_FILENAME       "slide1.xml")
-set(CM                        ${CMAKE_COMMAND})
-set(GENERATED_FILE            "generated")
+SET(TARGET_NAME         drawPPTX)
+set(EXTRACTED_TEMPLATE  ${CMAKE_BINARY_DIR}/template)
+set(TEMPLATE_SOURCE     ${CMAKE_SOURCE_DIR}/templates/)
+set(OUTPUT_XML_FILENAME "slide1.xml")
+set(CM                  ${CMAKE_COMMAND})
+set(GENERATED_FILE      "generated")
+set(CMAKE_CXX_STANDARD  11)
 
 # build TARGET_NAME from source code
 add_executable(${TARGET_NAME} main.cpp)
