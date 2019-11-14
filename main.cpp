@@ -18,7 +18,8 @@ double function(double x)
 {
     // normal distribution
     const double scale = 1. / sqrt(2 * M_PI);
-    return exp(-(x * x / 2.)) * scale;
+ //   return exp(-(x * x / 2.)) * scale;
+    return cos(x) * 0.2 + sin(11.*x);
 }
 
 struct _point
@@ -58,7 +59,8 @@ struct bezierPoint
 enum objectType
 {
     OBJECT_CURVES,
-    OBJECT_STRAIGHTLINE
+    OBJECT_STRAIGHTLINE,
+    OBJECT_CLOSEDLINE
 };
 
 class baseObject
@@ -167,6 +169,7 @@ public:
         int canvasSizePPTXHeight = (int)(_canvasSize.height * cm2pptx);
         switch (type)
         {
+        case OBJECT_CLOSEDLINE:
         case OBJECT_CURVES:
         {
             os << "<p:sp><p:nvSpPr><p:cNvPr id=\"" << counter << "\" name=\"qqqqqqqqq\"><a:extLst><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{29FFCF3D-8F32-482F-B193-ACC1CF50B0FA}\"/></a:ext></a:extLst></p:cNvPr><p:cNvSpPr/><p:nvPr/></p:nvSpPr>";
@@ -178,11 +181,24 @@ public:
                 os << "<a:gd name=\"connsiteX" << i << "\"  fmla=\"*/ " << (int)(canvasPoint.x) << " w " << canvasSizePPTXWidth << "\"/>" << std::endl;
                 os << "<a:gd name=\"connsiteY" << i << "\"  fmla=\"*/ " << (int)(canvasPoint.y) << " h " << canvasSizePPTXHeight << "\"/>" << std::endl;
             }
+            if (type == OBJECT_CLOSEDLINE)
+            {
+                size_t index = points.size();
+                os << "<a:gd name=\"connsiteX" << index << "\"  fmla=\"*/ " << (int)(points[0].x) << " w " << canvasSizePPTXWidth << "\"/>" << std::endl;
+                os << "<a:gd name=\"connsiteY" << index << "\"  fmla=\"*/ " << (int)(points[0].y) << " h " << canvasSizePPTXHeight << "\"/>" << std::endl;
+            }
             os << "</a:gdLst><a:ahLst/><a:cxnLst>" << std::endl;
             for (size_t i = 0; i < points.size(); i++)
             {
                 os << "<a:cxn ang=\"0\">" << std::endl;
                 os << "<a:pos x=\"connsiteX" << i << "\" y=\"connsiteY" << i << "\"/>" << std::endl;
+                os << "</a:cxn>" << std::endl;
+            }
+            if (type == OBJECT_CLOSEDLINE)
+            {
+                size_t index = points.size();
+                os << "<a:cxn ang=\"0\">" << std::endl;
+                os << "<a:pos x=\"connsiteX" << index << "\" y=\"connsiteY" << index << "\"/>" << std::endl;
                 os << "</a:cxn>" << std::endl;
             }
             {
@@ -203,7 +219,23 @@ public:
                 }
                 os << "</a:cubicBezTo>" << std::endl;
             }
-            os << "</a:path>" << std::endl << "</a:pathLst>" << std::endl << "</a:custGeom><a:noFill/></p:spPr>" << std::endl;
+            if (type == OBJECT_CLOSEDLINE)
+            {
+                point canvasPoint = convertToCanvas(points[0], size(canvasSizePPTXWidth, canvasSizePPTXHeight));
+                os << "<a:lnTo>"
+                    << "<a:pt x=\"" << (int)(canvasPoint.x) << "\" y=\"" << (int)(canvasPoint.y) << "\"/>"
+                    << "</a:lnTo>"
+                    << "<a:lnTo>"
+                    << "<a:pt x=\"" << (int)(canvasPoint.x) << "\" y=\"" << (int)(canvasPoint.y) << "\"/>"
+                    << "</a:lnTo>"
+                    << "<a:close/>";
+                os << "</a:path>" << std::endl << "</a:pathLst>" << std::endl << "</a:custGeom><a:solidFill><a:schemeClr val=\"accent1\"/></a:solidFill></p:spPr>" << std::endl;
+
+            }
+            else
+            {
+                os << "</a:path>" << std::endl << "</a:pathLst>" << std::endl << "</a:custGeom><a:noFill/></p:spPr>" << std::endl;
+            }
             os << "<p:style><a:lnRef idx=\"2\"><a:schemeClr val=\"accent1\"><a:shade val=\"50000\"/></a:schemeClr></a:lnRef><a:fillRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"lt1\"/></a:fontRef></p:style><p:txBody><a:bodyPr rtlCol=\"0\" anchor=\"ctr\"/><a:lstStyle/><a:p><a:pPr algn=\"ctr\"/><a:endParaRPr kumimoji=\"1\" lang=\"ja-JP\" altLang=\"en-US\"/></a:p></p:txBody></p:sp>";
         }
         break;
@@ -324,7 +356,7 @@ int main(int argc, char**argv)
     drawPPTX normalDistribution(size(cCanvasWidth, cCanvasHeight), size(cCanvasOffsetX, cCanvasOffsetY));
 
     range rangeX(cMinRange, cMaxRange);
-    baseObject mainCurve(OBJECT_CURVES), showRange(OBJECT_CURVES);
+    baseObject mainCurve(OBJECT_CURVES), showRange(OBJECT_CLOSEDLINE);
     mainCurve.drawCurves(function, rangeX, cStepCounts); // main curve of normal distribution
     showRange.drawConnectedLines(function, range(-1., 1.), rangeX);
 
