@@ -100,6 +100,55 @@ public:
             dPoint.pt[0] = point(pt.x + dStep, pt.y + slope);
         }
     }
+    void drawConnectedLines(double(*func)(double), const range& _rangeX, const range& totalRangeX)
+    {
+        rangeX = totalRangeX;
+        points.push_back(point(_rangeX.min, 0.));
+
+        // From left bottom to left top
+        bezierPoint dPoint;
+        point Point = point(_rangeX.min, func(_rangeX.min));
+        dPoint.pt[2] = Point;
+        dPoint.pt[1].x = dPoint.pt[0].x = _rangeX.min;
+        dPoint.pt[0].y = Point.y / 3.;
+        dPoint.pt[1].y = Point.y * (2./3.);
+        curves.push_back(dPoint);
+        points.push_back(Point);
+
+        unsigned int cIteration = (unsigned)(_rangeX.getSpan() / 0.1);
+        double dDistance = 0.1 / 3.;
+        double dStep = 0.1;
+
+        double slope = (func(Point.x + dDistance) - func(Point.x - dDistance)) / 2.;
+        for (unsigned i = 0; i < cIteration; i++)
+        {
+            // curves from left top to right top
+            dPoint.pt[0] = point(Point.x + dDistance, Point.y + slope);
+            Point.x += dStep;
+            Point.y = func(Point.x);
+            dPoint.pt[2] = Point;
+            slope = (func(Point.x + dDistance) - func(Point.x - dDistance)) / 2.;
+            dPoint.pt[1] = point(Point.x - dDistance, Point.y - slope);
+            curves.push_back(dPoint);
+            points.push_back(Point);
+        }
+
+        // line from right top to right bottom
+        dPoint.pt[0].x = dPoint.pt[1].x = dPoint.pt[2].x = _rangeX.max;
+        dPoint.pt[0].y = Point.y * (2. / 3.);
+        dPoint.pt[1].y = Point.y / 3.;
+        dPoint.pt[2].y = 0.;
+        curves.push_back(dPoint);
+        points.push_back(dPoint.pt[2]);
+
+        // Bottom Line
+        dPoint.pt[0].y = dPoint.pt[1].y = dPoint.pt[2].y = 0.;
+        dPoint.pt[0].x = (_rangeX.max * 2. + _rangeX.min) / 3.;
+        dPoint.pt[1].x = (_rangeX.min * 2. + _rangeX.max) / 3.;
+        dPoint.pt[2].x = _rangeX.min;
+        curves.push_back(dPoint);
+        points.push_back(Point);
+    }
     void drawArrow(const point& head, const point& tail)
     {
         points.push_back(head);
@@ -275,8 +324,9 @@ int main(int argc, char**argv)
     drawPPTX normalDistribution(size(cCanvasWidth, cCanvasHeight), size(cCanvasOffsetX, cCanvasOffsetY));
 
     range rangeX(cMinRange, cMaxRange);
-    baseObject mainCurve(OBJECT_CURVES);
+    baseObject mainCurve(OBJECT_CURVES), showRange(OBJECT_CURVES);
     mainCurve.drawCurves(function, rangeX, cStepCounts); // main curve of normal distribution
+    showRange.drawConnectedLines(function, range(-1., 1.), rangeX);
 
     range lineSpanY = mainCurve.getRangeY();
     range lineSpanX = mainCurve.getRangeX();
@@ -289,6 +339,8 @@ int main(int argc, char**argv)
     horizontalLine.drawArrow(point(cMinRange - marginSize.width, 0.), point(cMaxRange + marginSize.width, 0.));
 
     normalDistribution.push_back(mainCurve);
+    showRange.setRangeY(mainCurve.getRangeY());
+    normalDistribution.push_back(showRange);
     normalDistribution.push_back(verticalLine);
     normalDistribution.push_back(horizontalLine);
 
