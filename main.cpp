@@ -23,9 +23,9 @@ double function(double x)
 
 struct _point
 {
-    struct _point(double _x, double _y)
+    _point(double _x, double _y)
         : x(_x), y(_y) {};
-    struct _point() : x(0.), y(0.) {};
+    _point() : x(0.), y(0.) {};
     double x;
     double y;
 };
@@ -33,7 +33,7 @@ typedef _point point;
 
 struct _size
 {
-    struct _size(double _width, double _height)
+    _size(double _width, double _height)
         : width(_width), height(_height) {};
     double width;
     double height;
@@ -42,7 +42,7 @@ typedef _size size;
 
 struct _range
 {
-    struct _range(double _min, double _max)
+    _range(double _min, double _max)
         : min(_min), max(_max) {};
     double min;
     double max;
@@ -284,9 +284,9 @@ int main(int argc, char**argv)
     baseObject verticalLine(OBJECT_STRAIGHTLINE), horizontalLine(OBJECT_STRAIGHTLINE);
 
     // vertical arrow of axis
-    verticalLine.drawArrow(point(0, lineSpanY.min - marginSize.height), point(0, lineSpanY.max + marginSize.height));
+    verticalLine.drawArrow(point(0., lineSpanY.min - marginSize.height), point(0., lineSpanY.max + marginSize.height));
     // horizontal arrow of axis
-    horizontalLine.drawArrow(point(cMinRange - marginSize.width, 0), point(cMaxRange + marginSize.width, 0));
+    horizontalLine.drawArrow(point(cMinRange - marginSize.width, 0.), point(cMaxRange + marginSize.width, 0.));
 
     normalDistribution.push_back(mainCurve);
     normalDistribution.push_back(verticalLine);
