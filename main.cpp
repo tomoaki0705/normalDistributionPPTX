@@ -46,6 +46,7 @@ struct _range
         : min(_min), max(_max) {};
     double min;
     double max;
+    double getSpan() const { return max - min; }
 };
 typedef _range range;
 
@@ -163,12 +164,14 @@ public:
             double maxX = points[1].x < points[0].x ? points[0].x : points[1].x;
             double minY = points[0].y < points[1].y ? points[0].y : points[1].y;
             double maxY = points[1].y < points[0].y ? points[0].y : points[1].y;
-            int offsetX = (int)(canvasOffsetPPTXWidth + (minX / (rangeX.max - rangeX.min) + rangeX.min)* cm2pptx);
-            int offsetY = (int)(canvasOffsetPPTXHeight + ((rangeY.max - maxY) / (rangeY.max - rangeY.min))* cm2pptx);
-            int canvasWidth = (int)(((maxX - minX) / (rangeX.max - rangeX.min)) * cm2pptx);
-            int canvasHeight = (int)(((maxY - minY) / (rangeY.max - rangeY.min)) * cm2pptx);
-            // start showing vertical arrow line
-            os << "<p:cxnSp><p:nvCxnSpPr><p:cNvPr id=\"4\" name=\"LineArrow" << counter << "\"><a:extLst><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{B606E735-2B9E-47D5-A972-698E782DD359}\"/></a:ext></a:extLst></p:cNvPr><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr>";
+            point LB = convertToCanvas(point(minX, minY), size(canvasSizePPTXWidth, canvasSizePPTXHeight));
+            point RT = convertToCanvas(point(maxX, maxY), size(canvasSizePPTXWidth, canvasSizePPTXHeight));
+            int offsetX = (int)(LB.x) + canvasOffsetPPTXWidth;
+            int offsetY = (int)(RT.y) + canvasOffsetPPTXHeight;
+            int canvasWidth = (int)(((maxX - minX) / (rangeX.max - rangeX.min)) * cm2pptx * _canvasSize.width);
+            int canvasHeight = (int)(((maxY - minY) / (rangeY.max - rangeY.min)) * cm2pptx * _canvasSize.height);
+
+            os << "<p:cxnSp><p:nvCxnSpPr><p:cNvPr id=\"" << counter << "\" name=\"LineArrow" << counter << "\"><a:extLst><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{B606E735-2B9E-47D5-A972-698E782DD359}\"/></a:ext></a:extLst></p:cNvPr><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr>";
             os << "<p:spPr><a:xfrm flipV=\"1\"><a:off x=\"" << offsetX << "\" y=\"" << offsetY << "\"/><a:ext cx=\"" << canvasWidth << "\" cy=\"" << canvasHeight << "\"/></a:xfrm><a:prstGeom prst=\"straightConnector1\"><a:avLst/></a:prstGeom><a:ln><a:tailEnd type=\"triangle\"/></a:ln></p:spPr><p:style><a:lnRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:lnRef><a:fillRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></a:fontRef></p:style></p:cxnSp>";
         }
         break;
@@ -224,9 +227,10 @@ public:
     }
     void drawObjects(std::ostream& os) const
     {
+        int counter = objectIdCounter;
         for (auto&& it : objects)
         {
-            it.drawObject(os, objectIdCounter, canvasOffset, canvasSize);
+            it.drawObject(os, counter++, canvasOffset, canvasSize);
         }
     }
     void push_back(const baseObject& obj)
@@ -272,11 +276,17 @@ int main(int argc, char**argv)
 
     range rangeX(cMinRange, cMaxRange);
     baseObject mainCurve(OBJECT_CURVES);
-    mainCurve.drawCurves(function, rangeX, cStepCounts);
-    range rangeY = mainCurve.getRangeY();
+    mainCurve.drawCurves(function, rangeX, cStepCounts); // main curve of normal distribution
+
+    range lineSpanY = mainCurve.getRangeY();
+    range lineSpanX = mainCurve.getRangeX();
+    size marginSize = size(lineSpanX.getSpan() * 0.1, lineSpanY.getSpan() * 0.1);
     baseObject verticalLine(OBJECT_STRAIGHTLINE), horizontalLine(OBJECT_STRAIGHTLINE);
-    verticalLine.drawArrow(point(rangeY.min, 0), point(rangeY.max, 0));
-    horizontalLine.drawArrow(point(cMinRange, 0), point(cMaxRange, 0));
+
+    // vertical arrow of axis
+    verticalLine.drawArrow(point(0, lineSpanY.min - marginSize.height), point(0, lineSpanY.max + marginSize.height));
+    // horizontal arrow of axis
+    horizontalLine.drawArrow(point(cMinRange - marginSize.width, 0), point(cMaxRange + marginSize.width, 0));
 
     normalDistribution.push_back(mainCurve);
     normalDistribution.push_back(verticalLine);
@@ -284,58 +294,6 @@ int main(int argc, char**argv)
 
     std::ofstream ofs("slide1.xml");
     ofs << normalDistribution;
-#if 0
-    ofs << "<?xml version=\"1.0\" encoding=\"UTF-8\" standalone=\"yes\"?>" << std::endl;
-    ofs << "<p:sld xmlns:a=\"http://schemas.openxmlformats.org/drawingml/2006/main\" xmlns:r=\"http://schemas.openxmlformats.org/officeDocument/2006/relationships\" xmlns:p=\"http://schemas.openxmlformats.org/presentationml/2006/main\"><p:cSld><p:spTree><p:nvGrpSpPr><p:cNvPr id=\"1\" name=\"\"/><p:cNvGrpSpPr/><p:nvPr/></p:nvGrpSpPr><p:grpSpPr><a:xfrm><a:off x=\"0\" y=\"0\"/><a:ext cx=\"0\" cy=\"0\"/><a:chOff x=\"0\" y=\"0\"/><a:chExt cx=\"0\" cy=\"0\"/></a:xfrm></p:grpSpPr>";
-    ofs << "<p:sp><p:nvSpPr><p:cNvPr id=\"2\" name=\"qqqqqqqqq\"><a:extLst><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{29FFCF3D-8F32-482F-B193-ACC1CF50B0FA}\"/></a:ext></a:extLst></p:cNvPr><p:cNvSpPr/><p:nvPr/></p:nvSpPr>";
-    ofs << "<p:spPr><a:xfrm><a:off x=\"" << offsetX << "\" y=\"" << offsetY << "\"/>" << std::endl;
-    ofs << "<a:ext cx=\"" << cCanvasWidth << "\" cy=\"" << canvasHeight << "\"/>" << std::endl << "</a:xfrm><a:custGeom><a:avLst/><a:gdLst>" << std::endl;
-    int index = 0;
-    for (auto&& it : points)
-    {
-        point canvasPoint = convertToCanvas(it, cMinRange, cMaxRange, minY, maxY, cCanvasWidth, canvasHeight);
-        ofs << "<a:gd name=\"connsiteX" << index << "\"  fmla=\"*/ " << (int)(canvasPoint.x) << " w " << cCanvasWidth << "\"/>" << std::endl;
-        ofs << "<a:gd name=\"connsiteY" << index << "\"  fmla=\"*/ " << (int)(canvasPoint.y) << " h " << canvasHeight << "\"/>" << std::endl;
-        index++;
-    }
-    index = 0;
-    ofs << "</a:gdLst><a:ahLst/><a:cxnLst>" << std::endl;
-    for (auto&& it : points)
-    {
-        ofs << "<a:cxn ang=\"0\">" << std::endl;
-        ofs << "<a:pos x=\"connsiteX" << index << "\" y=\"connsiteY" << index << "\"/>" << std::endl;
-        ofs << "</a:cxn>" << std::endl;
-        index++;
-    }
-    {
-        point canvasPointStart = convertToCanvas(points[0], cMinRange, cMaxRange, minY, maxY, cCanvasWidth, canvasHeight);
-        ofs << "</a:cxnLst><a:rect l=\"l\" t=\"t\" r=\"r\" b=\"b\"/><a:pathLst>" << std::endl;
-        ofs << "<a:path w=\"" << cCanvasWidth << "\" h=\"" << canvasHeight << "\">" << std::endl;
-        ofs << "<a:moveTo>" << std::endl;
-        ofs << "<a:pt x=\"" << (int)(canvasPointStart.x) << "\" y=\"" << (int)(canvasPointStart.y) << "\"/>" << std::endl;
-        ofs << "</a:moveTo>" << std::endl;
-    }
-    index = 0;
-    for (auto&& it : curves)
-    {
-        ofs << "<a:cubicBezTo>" << std::endl;
-        for (size_t i = 0; i < 3; i++)
-        {
-            point canvasPoint = convertToCanvas(it.pt[i], cMinRange, cMaxRange, minY, maxY, cCanvasWidth, canvasHeight);
-            ofs << "<a:pt x=\"" << (int)(canvasPoint.x) << "\" y=\"" << (int)(canvasPoint.y) << "\"/>" << std::endl;
-        }
-        ofs << "</a:cubicBezTo>" << std::endl;
-    }
-    ofs << "</a:path>" << std::endl << "</a:pathLst>" << std::endl << "</a:custGeom><a:noFill/></p:spPr>" << std::endl;
-    ofs << "<p:style><a:lnRef idx=\"2\"><a:schemeClr val=\"accent1\"><a:shade val=\"50000\"/></a:schemeClr></a:lnRef><a:fillRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"lt1\"/></a:fontRef></p:style><p:txBody><a:bodyPr rtlCol=\"0\" anchor=\"ctr\"/><a:lstStyle/><a:p><a:pPr algn=\"ctr\"/><a:endParaRPr kumimoji=\"1\" lang=\"ja-JP\" altLang=\"en-US\"/></a:p></p:txBody></p:sp>";
-    // start showing vertical arrow line
-    ofs << "<p:cxnSp><p:nvCxnSpPr><p:cNvPr id=\"4\" name=\"LineArrow3\"><a:extLst><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{B606E735-2B9E-47D5-A972-698E782DD359}\"/></a:ext></a:extLst></p:cNvPr><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr>";
-    ofs << "<p:spPr><a:xfrm flipV=\"1\"><a:off x=\"" << offsetX + (cCanvasWidth / 2) << "\" y=\"" << (int)(offsetY - 0.1 * canvasHeight) << "\"/><a:ext cx=\"0\" cy=\"" << (int)(canvasHeight * 1.2) << "\"/></a:xfrm><a:prstGeom prst=\"straightConnector1\"><a:avLst/></a:prstGeom><a:ln><a:tailEnd type=\"triangle\"/></a:ln></p:spPr><p:style><a:lnRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:lnRef><a:fillRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></a:fontRef></p:style></p:cxnSp>";
-    // start showing horizontal arrow line
-    ofs << "<p:cxnSp><p:nvCxnSpPr><p:cNvPr id=\"5\" name=\"LineArrow4\"><a:extLst><a:ext uri=\"{FF2B5EF4-FFF2-40B4-BE49-F238E27FC236}\"><a16:creationId xmlns:a16=\"http://schemas.microsoft.com/office/drawing/2014/main\" id=\"{B606E735-2B9E-47D5-A972-698E782DD359}\"/></a:ext></a:extLst></p:cNvPr><p:cNvCxnSpPr/><p:nvPr/></p:nvCxnSpPr>";
-    ofs << "<p:spPr><a:xfrm flipV=\"1\"><a:off x=\"" << (int)(offsetX - (cCanvasWidth * 0.1)) << "\" y=\"" << (int)(offsetY + convertToCanvasY(0., maxY, minY, canvasHeight)) << "\"/><a:ext cx=\"" << (int)(cCanvasWidth * 1.2) << "\" cy=\"0\"/></a:xfrm><a:prstGeom prst=\"straightConnector1\"><a:avLst/></a:prstGeom><a:ln><a:tailEnd type=\"triangle\"/></a:ln></p:spPr><p:style><a:lnRef idx=\"1\"><a:schemeClr val=\"accent1\"/></a:lnRef><a:fillRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:fillRef><a:effectRef idx=\"0\"><a:schemeClr val=\"accent1\"/></a:effectRef><a:fontRef idx=\"minor\"><a:schemeClr val=\"tx1\"/></a:fontRef></p:style></p:cxnSp>";
-    ofs << "</p:spTree><p:extLst><p:ext uri=\"{BB962C8B-B14F-4D97-AF65-F5344CB8AC3E}\"><p14:creationId xmlns:p14=\"http://schemas.microsoft.com/office/powerpoint/2010/main\" val=\"2550586031\"/></p:ext></p:extLst></p:cSld><p:clrMapOvr><a:masterClrMapping/></p:clrMapOvr></p:sld>";
-#endif
 
     return 0;
 }
