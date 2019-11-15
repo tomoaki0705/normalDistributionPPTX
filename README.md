@@ -10,4 +10,4 @@ generate a Power Point slide which contains normal distribution
 
 # What you'll get
 
-https://gist.githubusercontent.com/tomoaki0705/271642f6ef343155fbe9fcd7bf940cf9/raw/68c307eb351bd032fe4ec0f7b6e28b9d05d0a82f/screenshot.png
+![What you'll get](https://gist.githubusercontent.com/tomoaki0705/271642f6ef343155fbe9fcd7bf940cf9/raw/68c307eb351bd032fe4ec0f7b6e28b9d05d0a82f/screenshot.png)
