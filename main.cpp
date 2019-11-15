@@ -67,8 +67,8 @@ class baseObject
 public:
     baseObject(enum objectType _type)
         : type(_type)
-        , rangeY(range(DBL_MAX, -DBL_MAX))
-        , rangeX(range(DBL_MAX, -DBL_MAX))
+        , rangeY(range(0, 0))
+        , rangeX(range(0, 0))
     {};
     ~baseObject();
     void drawCurves(double(*func)(double), const range& _rangeX, const int cDivSteps)
