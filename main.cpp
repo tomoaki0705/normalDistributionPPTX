@@ -13,6 +13,7 @@ const double cCanvasWidth = 12;
 const double cCanvasHeight = 9;
 const double cMinRange = -3.0;
 const double cMaxRange = 3.0;
+const double cGoldenRatio = (1. + sqrt(5)) / 2.;
 
 double function(double x)
 {
@@ -421,9 +422,20 @@ int main(int argc, char**argv)
     ofs << normalDistribution;
 
     baseObject logarithmicSpiral(OBJECT_CURVES);
-    drawPPTX logarithmicSpiralSlide(size(cCanvasWidth, cCanvasHeight), size(cCanvasOffsetX, cCanvasOffsetY));
-    logarithmicSpiral.drawParametricEquation(parametricFunction, range(-6 * M_PI, 6 * M_PI), cStepCounts);
+    drawPPTX logarithmicSpiralSlide(size(cCanvasHeight * cGoldenRatio, cCanvasHeight), size(cCanvasOffsetX, cCanvasOffsetY));
+    logarithmicSpiral.drawParametricEquation(parametricFunction, range(-2 * M_PI, 2 * M_PI), cStepCounts);
     logarithmicSpiralSlide.push_back(logarithmicSpiral);
+
+    range logRangeX = logarithmicSpiral.getRangeX();
+    range logRangeY = logarithmicSpiral.getRangeY();
+    marginSize = size(logRangeX.getSpan() * 0.1, logRangeY.getSpan() * 0.1);
+    baseObject vLine(OBJECT_STRAIGHTLINE), hLine(OBJECT_STRAIGHTLINE);
+
+    vLine.drawArrow(point(0., logRangeY.min - marginSize.height), point(0., logRangeY.max + marginSize.height));
+    hLine.drawArrow(point(logRangeX.min - marginSize.width,  0.), point(logRangeX.max + marginSize.width, 0.));
+    logarithmicSpiralSlide.push_back(vLine);
+    logarithmicSpiralSlide.push_back(hLine);
+
 
     std::ofstream ofs2("slide2.xml");
     ofs2 << logarithmicSpiralSlide;
