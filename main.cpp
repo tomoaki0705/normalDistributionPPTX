@@ -31,6 +31,14 @@ struct _point
 };
 typedef _point point;
 
+point parametricFunction(double t)
+{
+    point result;
+    result.x = exp(1/3. * t) * cos(t);
+    result.y = exp(1/3. * t) * sin(t);
+    return result;
+}
+
 struct _size
 {
     _size(double _width, double _height)
@@ -71,6 +79,40 @@ public:
         , rangeX(range(0, 0))
     {};
     ~baseObject();
+    void drawParametricEquation(point (*func)(double), const range& _rangeT, const int cDivSteps)
+    {
+        double cStep = _rangeT.getSpan() / cDivSteps;
+        //rangeX = _rangeX;
+
+        // for differentials
+        bezierPoint dPoint;
+        double dStep = cStep / 3.;
+
+        for (size_t i = 0; i <= cDivSteps; i++)
+        {
+            double t = _rangeT.min + i * cStep;
+            point pt = func(t);
+            points.push_back(pt);
+
+            // check the range of Y
+            rangeX.min = pt.x < rangeX.min ? pt.x : rangeX.min;
+            rangeX.max = pt.x > rangeX.max ? pt.x : rangeX.max;
+            rangeY.min = pt.y < rangeY.min ? pt.y : rangeY.min;
+            rangeY.max = pt.y > rangeY.max ? pt.y : rangeY.max;
+
+            // compute differentials
+            point diff[] = { func(t - dStep), func(t + dStep) };
+            double slope = (diff[1].y - diff[0].y) / 2.;
+            double xStep = (diff[1].x - diff[0].x) / 2.;
+            dPoint.pt[1] = point(pt.x - xStep, pt.y - slope);
+            dPoint.pt[2] = pt;
+            if (i != 0)
+            { // skip first iteration
+                curves.push_back(dPoint);
+            }
+            dPoint.pt[0] = point(pt.x + xStep, pt.y + slope);
+        }
+    }
     void drawCurves(double(*func)(double), const range& _rangeX, const int cDivSteps)
     {
         rangeX = _rangeX;
@@ -377,6 +419,14 @@ int main(int argc, char**argv)
 
     std::ofstream ofs("slide1.xml");
     ofs << normalDistribution;
+
+    baseObject logarithmicSpiral(OBJECT_CURVES);
+    drawPPTX logarithmicSpiralSlide(size(cCanvasWidth, cCanvasHeight), size(cCanvasOffsetX, cCanvasOffsetY));
+    logarithmicSpiral.drawParametricEquation(parametricFunction, range(-6 * M_PI, 6 * M_PI), cStepCounts);
+    logarithmicSpiralSlide.push_back(logarithmicSpiral);
+
+    std::ofstream ofs2("slide2.xml");
+    ofs2 << logarithmicSpiralSlide;
 
     return 0;
 }
