@@ -35,8 +35,8 @@ typedef _point point;
 point parametricFunction(double t)
 {
     point result;
-    result.x = exp(1/3. * t) * cos(t);
-    result.y = exp(1/3. * t) * sin(t);
+    result.x = exp(1/10. * t) * cos(t);
+    result.y = exp(1/10. * t) * sin(t);
     return result;
 }
 
@@ -423,7 +423,7 @@ int main(int argc, char**argv)
 
     baseObject logarithmicSpiral(OBJECT_CURVES);
     drawPPTX logarithmicSpiralSlide(size(cCanvasHeight * cGoldenRatio, cCanvasHeight), size(cCanvasOffsetX, cCanvasOffsetY));
-    logarithmicSpiral.drawParametricEquation(parametricFunction, range(-2 * M_PI, 2 * M_PI), cStepCounts);
+    logarithmicSpiral.drawParametricEquation(parametricFunction, range(-6 * M_PI, 2 * M_PI), cStepCounts);
     logarithmicSpiralSlide.push_back(logarithmicSpiral);
 
     range logRangeX = logarithmicSpiral.getRangeX();
